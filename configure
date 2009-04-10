@@ -1,0 +1,16 @@
+#!/bin/sh
+progname=${0/*\//}
+confiserie=${0/\/$progname/}/confiserie
+
+
+MAKEFILE=Makefile.confiserie
+CONFIGURE_OPTS[1]="--test=,TEST,test option [string],/usr/local"
+
+clean_on_sig() {
+	rm -f $MAKEFILE
+	return 0
+ }
+
+trap clean_on_sig 2 15                   &&
+. ${confiserie}/init.sh    > $MAKEFILE     &&
+finish_confiserie

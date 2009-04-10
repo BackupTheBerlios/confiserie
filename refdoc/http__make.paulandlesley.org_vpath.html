@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html><head>
+<title>How Not to Use VPATH</title></head>
+ <body bgcolor="honeydew">
+<h1>How <strong>Not</strong> to Use VPATH</h1>
+
+<p></p><hr>
+<blockquote>
+One of the most common things people try to do with GNU
+<code>make</code> is use the VPATH feature for multi-architecture
+builds.
+
+<p> This is certainly possible, but it isn't nearly as straightforward
+as you might first imagine.  This isn't necessarily due to deficiencies
+in VPATH, per se, as much as a lack of understanding of what VPATH is
+for and how it works.
+
+</p><p> In particular, you must take note of <a href="http://make.paulandlesley.org/rules.html#rule3">Paul's Third Rule of Makefiles</a>!  This is the
+key.  VPATH was designed to find <em>sources</em>, not <em>targets</em>.
+</p></blockquote>
+
+<p></p><hr>
+
+<p> To try to prove this to you, we'll walk along beside someone
+attempting to create a makefile using VPATH to place targets into
+another directory from the source files.
+
+</p><p> To set this up yourself, construct an environment like this:
+
+</p><pre>  $ mkdir /tmp/mktest
+
+  $ cd /tmp/mktest
+
+  $ mkdir obj src
+
+  $ cd src
+
+  $ cat &gt; foo.c
+  int main() { extern int bar(); return bar(); }
+  ^D
+
+  $ cat &gt; bar.c
+  int bar() { return 0; }
+  ^D
+</pre>
+
+<p></p><hr>
+
+<h2>Step One</h2>
+
+<p> The first attempt at using VPATH usually goes something like this:
+
+</p><pre>  OBJDIR = ../obj
+
+  VPATH = $(OBJDIR)
+
+  %.o : %.c
+          $(COMPILE.c) $&lt; -o $(OBJDIR)/$@
+
+  all: foo
+
+  foo: foo.o bar.o
+          $(LINK.o) $^ $(LDLIBS) -o $(OBJDIR)/$@
+</pre>
+
+<p> There are many things wrong with this makefile.  First, note that
+both the pattern rule to build <code>.o</code>'s and the explicit rule
+to build target <code>foo</code> violate <a href="http://make.paulandlesley.org/rules.html#rule2">Paul's Second Rule of Makefiles</a>.
+
+</p><p> Although they say ``the commands I list here will create a
+<code>X</code> from a file <code>Y</code>'', that is <em>not</em> what
+the commands actually do.  Instead, they create <code>../obj/X</code>
+from <code>Y</code>.  This is not the same thing at all, and GNU
+<code>make</code> will become very upset with the deception.
+
+</p><p> So, what will happen?  Well, GNU <code>make</code> will build the
+<code>.o</code>'s correctly, but when it tries to build link the
+executable it will <em>think</em> that they are <code>foo.o</code> and
+<code>bar.o</code>, not <code>../obj/foo.o</code> and
+<code>../obj/bar.o</code>, and so it will invoke the linker like this:
+
+</p><pre>  $ gmake
+  cc -c foo.c -o ../obj/foo.o
+  cc -c bar.c -o ../obj/bar.o
+  cc foo.o bar.o -o ../obj/foo
+  ld: foo.o: No such file or directory
+</pre>
+
+<p> The link will, of course, fail, since the <code>.o</code> files
+don't exist in the current directory, but rather in
+<code>$(OBJDIR)/</code>.
+
+</p><p></p><hr>
+
+<h2> Step Two </h2>
+
+<p> Seeing the above error, people try to build again.  The second time,
+it will work:
+
+</p><p></p><pre>  $ gmake
+  cc ../obj/foo.o ../obj/bar.o -o ../obj/foo
+</pre>
+
+<p> Why did it work this time?  Well, this time, for the first time,
+VPATH actually came into play.  When <code>make</code> wanted to build
+<code>foo</code>, it looked for its dependencies first.  Using VPATH, it
+was able to locate both <code>../obj/foo.o</code> and
+<code>../obj/bar.o</code>, and it linked them together.
+
+</p><p> Well, it's certainly annoying that the link fails the first time.
+But, this isn't the worst of the problems with this setup.  Suppose you
+modify <code>foo.c</code> and want to now rebuild.  What will happen
+next depends on which version of GNU <code>make</code> you're using;
+with <code>make</code> 3.75 and below you'll get a different result,
+also incorrect (it will say ``Nothing to be done for `all''').  Here
+we'll describe the newer GNU <code>make</code>:
+
+</p><p></p><pre>  $ touch foo.c
+
+  $ gmake -f step1.mk
+  cc -c foo.c -o ../obj/foo.o
+  cc foo.o obj/bar.o -o obj/foo
+  ld: foo.o: No such file or directory
+</pre>
+
+<p> Argh!  It broke again.  Same reason as before.  Once again,
+re-running the make gets the link to work.
+
+</p><p></p><hr>
+<h2>Step Three</h2>
+
+<p> Well, that's obviously not acceptable.  Once this problem is
+understood, people usually try to fix their makefiles by adding
+<code>$(OBJDIR)/</code> at strategic points, perhaps like this:
+
+</p><p></p><pre>  OBJDIR = ../obj
+
+  VPATH = $(OBJDIR)
+
+  $(OBJDIR)/%.o : %.c
+          $(COMPILE.c) $&lt; -o $@
+
+  all: foo
+
+  foo: foo.o bar.o
+          $(LINK.o) $^ $(LDLIBS) -o $(OBJDIR)/$@
+</pre>
+
+<p> The creation of <code>foo</code> is still incorrect according to the
+Second Rule of Makefiles, but since nothing depends on <code>foo</code>
+in our example, this incorrectness will probably go unnoticed--at least
+until you attempt to create an <code>install</code> rule, perhaps.
+
+</p><p> Here the makefile wants to rely on VPATH to locate the
+<code>.o</code> files, rather than prefixing them all with
+<code>$(OBJDIR)/</code>.  A reasonable thought, perhaps, but this is not
+how VPATH works.
+
+</p><p> This is what happens if we start with a clean slate:
+
+</p><pre>  $ gmake
+  cc -c foo.c -o foo.o
+  cc -c bar.c -o bar.o
+  cc foo.o bar.o -o ../obj/foo
+</pre>
+
+<p> What happened?!  Well, in some sense it worked since it compiled and
+linked everything OK, but it put the <code>.o's</code> in the current
+directory instead of in the <code>$(OBJDIR)/</code> directory!
+
+</p><p> To understand this, first remember that <code>make</code> always
+builds <em>from the bottom up</em>, not from the top down.  By that I
+mean it finds the target it wants to build, then looks at its
+dependencies, and <em>it's</em> dependencies, etc.  So far it hasn't
+tried to build anything.  Finally, when it gets to the bottom (no
+dependencies, or dependencies that can't be rebuilt), it walks back up,
+attempting to build every target.
+
+</p><p> How does that explain things?  Well, to build <code>foo</code>,
+<code>make</code> examines the first dependency, <code>foo.o</code>.
+Then it tries to figure out how to build a <code>foo.o</code>.  You want
+it to use your new rule, but it won't, because it's trying to build
+<code>foo.o</code>, <strong>not</strong> <code>$(OBJDIR)/foo.o</code>.
+So your rule doesn't match.  Instead it matches the builtin rule for
+building <code>.o</code>'s from <code>.c</code>'s, and builds them in
+the local directory.
+
+</p><p></p><h2> Step Four </h2>
+
+<p> Now people usually throw up their hands and just add
+<code>$(OBJDIR)/</code> all over the place.  If they're tidy, they might
+try to use some of GNU <code>make</code>'s functions to make things a
+little simpler to read/modify:
+
+</p><p></p><pre>  PROGS   = foo
+  OBJECTS = foo.o bar.o
+
+  # Shouldn't need to change anything below here...
+
+  OBJDIR = ../obj
+
+  VPATH = $(OBJDIR)
+
+  $(OBJDIR)/%.o : %.c
+          $(COMPILE.c) $&lt; -o $@
+
+  OBJPROG = $(addprefix $(OBJDIR)/, $(PROGS))
+
+  all: $(OBJPROG)
+
+  $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
+          $(LINK.o) $^ $(LDLIBS) -o $@
+</pre>
+
+<p> Well!  That should fix it!  And indeed it does.  This makefile will
+work correctly in all situations.  However, there's something a little
+strange about it.
+
+</p><p> As written, it doesn't <strong>need VPATH</strong> at all!  It
+explicitly adds the path to all the dependencies, so VPATH is never
+consulted.
+
+</p><p></p><hr>
+<h2> Conclusion </h2>
+
+<p> So we've shown that the only reliable way to construct a makefile
+that will place targets into a remote directory, rather than the current
+directory, is by prefixing all the targets with that directory path.  In
+other words, VPATH is useless to us for this purpose.
+
+</p><p> How depressing.  Well, then, what the heck <strong>is</strong> VPATH
+good for, anyway?  As described in <a href="http://make.paulandlesley.org/rules.html#rule3">Paul's
+Third Rule of Makefiles</a>, VPATH is good for finding <em>sources</em>,
+not for finding <em>targets</em>.
+
+</p><p> That seems impractical.  After all, developers work on source files,
+not target files, so requiring them to change to the target directory
+before running <code>make</code> is a pain.
+
+</p><p> However, what if they didn't have to?  <a href="http://make.paulandlesley.org/multi-arch.html">Click here</a> to read about the method I use for
+handling this common scenario.
+
+</p><p></p><hr>
+<a href="http://www.paulandlesley.org/">Paul D. Smith</a>
+<a href="mailto:psmith@gnu.org">&lt;psmith@gnu.org&gt;</a>
+<hr>
+<img src="http__make.paulandlesley.org_vpath_fichiers/Count.gif"><hr>
+<i>
+<!-- hhmts start -->
+Last modified: Fri Jun 23 18:14:41 EDT 2000
+<!-- hhmts end -->
+</i>
+<font size="2"></font><p></p><center>
+<font size="2">Copyright © 1997 Paul D. Smith --- Verbatim copying and
+distribution is permitted in any medium, provided this notice is
+preserved.
+</font></center>
+</body></html>

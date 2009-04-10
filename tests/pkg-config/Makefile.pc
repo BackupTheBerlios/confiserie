@@ -1,0 +1,23 @@
+#/***********************************************************************
+#* copyright (c) 2004-2006 MALET Jean-luc aka cityhunter
+#* This library is free software; you can redistribute it and/or modify
+#* it under the terms of the LGPL v2.1 or latter at your option
+#* http://www.gnu.org/copyleft/lesser.html
+#************************************************************************/
+all : all_pkg-config
+
+all_pkg-config :
+	mkdir -p .GEN
+	$(foreach pkg,${PKG_CONFIG}, ${confiserie}/pkg-config/make_pc.sh ${pkg} > .GEN/${pkg}.pc)
+
+
+clean : clean_pkg-config
+
+clean_pkg-config :
+	rm -rf .GEN
+
+install : install_pkg-config
+install_pkg-config :
+	test -z "${PKG_CONFIG_INSTALL_DIR}" && echo 'PKG_CONFIG_INSTALL_DIR not set! add $${confiserie}/pkg-config/test_pkg-config.sh to your ./configure!' && exit 1
+	cp .GEN/*.pc ${PKG_CONFIG_INSTALL_DIR}
+

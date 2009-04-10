@@ -1,0 +1,11 @@
+ ifeq (,$(filter _%,$(notdir $(CURDIR))))
+ include target.mk
+ else
+ #----- End Boilerplate
+
+ VPATH = $(SRCDIR)
+
+   Normal makefile rules here
+
+ #----- Begin Boilerplate
+ endif

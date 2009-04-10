@@ -1,0 +1,64 @@
+#/***********************************************************************
+#* copyright (c) 2004-2006 MALET Jean-luc aka cityhunter
+#* This library is free software; you can redistribute it and/or modify
+#* it under the terms of the LGPL v2.1 or latter at your option
+#* http://www.gnu.org/copyleft/lesser.html
+#************************************************************************/
+
+ifdef CONFISERIE_DEBUG
+$(warning "availble targets : noinst_PROGRAMS bin_PROGRAMS sbin_PROGRAMS custom_PROGRAMS")
+endif
+
+#programms created for compilation purpose but not installed
+ifdef noinst_PROGRAMS
+autolibapp=yes
+include $(foreach app,${noinst_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh NOINST_DIR ${app} CC) )
+else
+ifdef CONFISERIE_DEBUG
+$(warning noinst_PROGRAMS not defined, disabling)
+endif
+endif
+
+#programms installed into bin dir
+ifdef bin_PROGRAMS
+autolibapp=yes
+include $(foreach app,${bin_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh BIN_DIR ${app} CC))
+else
+ifdef CONFISERIE_DEBUG
+$(warning bin_PROGRAMS not defined, disabling)
+endif
+endif
+
+#programms installed into sbin dir
+ifdef sbin_PROGRAMS
+autolibapp=yes
+include $(foreach app,${sbin_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh SBIN_DIR ${app} CC) )
+else
+ifdef CONFISERIE_DEBUG
+$(warning sbin_PROGRAMS not defined, disabling)
+endif
+endif
+
+#programms installed into bin dir
+ifdef custom_PROGRAMS
+autolibapp=yes
+include $(foreach app,${custom_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh CUSTOM_BIN_DIR ${app} CC) )
+else
+ifdef CONFISERIE_DEBUG
+$(warning custom_PROGRAMS not defined, disabling)
+endif
+endif
+
+
+
+
+ifdef autolibapp
+
+
+clean : clean_autoapp_dep
+
+clean_autoapp_dep : 
+	rm -rf GENERATED
+
+#endif autolibapp
+endif 

@@ -1,0 +1,61 @@
+#/***********************************************************************
+#* copyright (c) 2004-2006 MALET Jean-luc aka cityhunter
+#* This library is free software; you can redistribute it and/or modify
+#* it under the terms of the LGPL v2.1 or latter at your option
+#* http://www.gnu.org/copyleft/lesser.html
+#************************************************************************/
+
+#this Makefile require ${confiserie}/test_install.sh
+#this Makefile require ${confiserie}/setup_dirs.sh
+
+#some redefine for the install programm
+#${INSTALL_PROGRAM}=${INSTALL}
+#${INSTALL_DATA}=${INSTALL} -m 644
+
+INSTALLMSG ?= echo "[ INSTALLING ]"
+
+#define some helper macro
+#install_macro = mkdir -p ${1}      \
+#								for FILE in $^; do \
+#									${INSTALLMSG} $$FILE in  ${LIBDIR}       \
+#									${INSTALL_PROGRAM} -C $$FILE ${LIBDIR}   \
+#								done
+
+
+#ancienne facon d'installer (lente car 'for ... ')
+#install_lib :${lib_LIBRARIES} 
+#	mkdir -p  ${LIBDIR}                        
+#	for FILE in $^; do                         \
+#	  ${INSTALLMSG} $$FILE in  ${LIBDIR}       \
+#	  ${INSTALL_PROGRAM} -C $$FILE ${LIBDIR}   \
+#	done
+#endif
+
+			
+
+fix_mode = $(foreach file,$^,newmode=${$(basename ${file})_MODE}; chmod $${newmode:=$2} $1/${file};)
+
+#########################################################
+ifdef file_CONFIG
+install : install_conf
+
+install_lib :${file_CONFIG} 
+	${INSTALLMSG} $^ in ${SYS_CONF}
+	mkdir -p  ${SYS_CONF}                       
+	cp $^ ${SYS_CONF}
+	$(call fix_mode,${SYS_CONF},644)
+endif
+
+#########################################################
+ifdef file_DATA
+install : install_data
+
+install_data :${file_DATA} 
+	${INSTALLMSG} $^ in ${SHARED_DATA_DIR}
+	mkdir -p  ${SHARED_DATA_DIR}                        
+	cp -R $^ ${SHARED_DATA_DIR}
+	$(call fix_mode,${SHARED_DATA_DIR},644)
+
+endif
+
+

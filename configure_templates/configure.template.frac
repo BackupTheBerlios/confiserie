@@ -1,0 +1,44 @@
+#!/bin/sh
+# (C) 2005-2005 MALET Jean-Luc aka cityhunter
+#this file is provided under the thermes of the BSD licence, you can use it, modify it
+#include it into your commercial software as you want
+
+#those lines can't be provided as separate scripts, and are required to make link farms
+#confiserie will works only if this script is called configure
+progname=${0/*\//}
+confiserie=${0/\/$progname/}/confiserie
+
+CONFIGURE_OPTS[1]="--test=,TEST,test option [string],/usr/local"
+CONFIGURE_OPTS[2]="--test=,TEST,test option [string],/usr/local"
+CONFIGURE_OPTS[3]="--test=,TEST,test option [string],/usr/local"
+CONFIGURE_OPTS[4]="--test=,TEST,test option [string],/usr/local"
+
+#this funtion should clean the file you create with this script
+custom_clean_on_sig() {
+  rm -f Makefile.confiserie config.h Makefile.run optional.h
+ }
+
+#here are the sub tests
+source ${confiserie}/configure.compile_utils.sh
+source ${confiserie}/configure.req_feats.sh
+source ${confiserie}/configure.run_utils.sh
+source ${confiserie}/configure.opt_feats.sh
+source ${confiserie}/configure.opt_utils.sh
+
+#clean everything before begining
+custom_clean_on_sig
+
+#init of outputs (clear config.h, clear Makefile.confiserie), check presence
+#of used tool
+source ${confiserie}/init.sh "$@"
+
+
+compile_test  1>>Makefile.confiserie &&
+test_required_feats 1>>config.h      &&
+test_run_utils 1>>Makefile.run       ||clean_on_sig
+
+test_optional_feats 1>>Makefile.run 
+test_optional_utils 1>>optional.h 
+
+
+finish_confiserie

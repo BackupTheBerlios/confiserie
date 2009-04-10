@@ -1,0 +1,58 @@
+# (C) 2005-2005 MALET Jean-Luc aka cityhunter
+#this file is provided under the thermes of the BSD licence, you can use it, modify it
+#include it into your commercial software as you want
+
+# as a general rule to avoid issues
+#    make variables first
+#    make rules following (first appearing rule is the default when issuing 'make')
+#    includes last
+
+export TOPSRC_DIR?=${PWD}
+export VPATH=${TOPSRC_DIR}/${MSGSUBDIR}
+include ${TOPSRC_DIR}/Makefile.confiserie
+
+
+#general variables
+.PHONY : all test clean debug
+#default target 
+all :
+
+#addition to environnement variable, be carefull when nesting subdirs in this makefile
+LDFLAGS+= -L../lib -lOpenML
+CFLAGS+= -Wall -Werror-implicit-function-declaration
+CPPFLAGS+= -I../include
+
+#here goes your sources
+oml_capabilites_sources = oml_capabilities.c
+
+programms = oml_capabilites${ext}
+
+
+#now the target
+all : ${programms}
+	${SUCCESSMSG} $^
+	
+oml_capabilites${ext} : ${oml_capabilites_sources:%.c=%.o}
+	${LDMESG} $@
+	${LD} ${LDFLAGS} -o $@ $^
+
+
+#a special target : it only modify CFLAGS variables before making it the standard way
+debug : CFLAGS+= -g3 -gdwarf-2 -O0
+debug : all
+	
+
+clean :
+	${CLEANINGMSG} ${MSGSUBDIR}
+	rm -f *.o ${programms}
+	rm -Rf .DEP
+
+install :
+
+#includes
+include ${TOPSRC_DIR}/C/Makefile.auto_headers_deps
+#create the dependencies (the - is for avoiding it to be too verbose)
+-include ${oml_capabilites_sources:%.c=.DEP/%.d}
+
+
+

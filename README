@@ -1,0 +1,40 @@
+the lastest version of this document can be found in doc directory
+
+
+what is confiserie ? 
+-------------------
+it's a replacement for GNU(Posix?) systems of the well known gnu autoconf 
+it's also the french term for "sweet". it's like them : a small goodlooking
+tastefull thing that make developers happy ^_^
+
+it's a set of scripts to run to check particular requirements of a package, a script to help user maintaining the pakage's scripts, a set of Makefiles templates 
+
+the main goal is to teach user good behaviour when creating a software and not only depend on autotools whithout understanding a single step of what they do
+
+why such a Project? 
+--------------------
+because autoconf rely on the knowledge of 2 languages to be used and extented : 
+->(ba)sh for checking the return values in case of use and in case of 
+extention you need to know sh to create the test
+->m4 to include it inside your sh test for use and m4 to include it into 
+autoconf for extension
+
+because autoconf need the creation and create lot of unused files
+
+because the same can be achieved more easely with well designed sh scripts 
+
+because programmer often learn sh to make simple SA tasks and find autoconf 
+script unreadable
+
+because the output of an autoconf/automake is often unreadable and don't take 
+advantages of modern make
+
+HOW will it work? How can I use it?
+--------------------
+see html documents in doc folder.
+
+special thanks :
+-------------------
+to the autotools maintainers that helped to develop opensources
+to the autoconfs because some of the scripts provided are port of their work
+

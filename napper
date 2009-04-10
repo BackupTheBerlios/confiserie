@@ -1,0 +1,171 @@
+#!/bin/sh
+
+indenter() {
+	local I=0
+	while [ $I -lt $INDENT_LEVEL ]; do
+		echo -n "  "
+		I=$((I+1))
+	done
+	echo $1
+}
+
+check_update() {
+	if [ -d $1/${confiserie} ]; then
+		echo "$1/${confiserie} already exist, update?"
+		read
+		if [ "$REPLY" == "y" ]; then
+			if [ -f $1/${confiserie}/autoinstalledscripts ]; then 
+				cat $1/${confiserie}/autoinstalledscripts |xargs -i rm -rf $1/{}
+				rm $1/${confiserie}/autoinstalledscripts
+			fi
+		else 
+			exit 1;
+		fi
+	fi	
+	
+	if [ -d $1 ]; then
+		mkdir -p $1/${confiserie}
+	else
+		echo "$1 not a directory"
+		exit 1
+	fi
+}
+
+check_confiser_path() {
+	if [ -z "$CONFISERIE_SCRIPTS_DIR" ]; then
+	echo 'please export CONFISERIE_SCRIPTS_DIR env variable '
+	echo '(normaly /usr/share/confiserie) do a find or locate confiserie'
+	echo 'or fix the file /etc/confiser.conf'
+	exit 1
+fi
+
+}
+
+install_new_script() {
+
+	local SCRIPT=$2
+	local DIR=$1
+	OLDIFS=$IFS
+	IFS=$'\n'
+	
+	indenter $SCRIPT
+	for FILE in $(find $CONFISERIE_SCRIPTS_DIR/tests -type f -printf "%P\n" ); do
+		if grep -q \$\{confiserie\}/$FILE $SCRIPT && 
+				! [ -x $DIR/${confiserie}/$FILE ]
+		then
+			INDENT_LEVEL=$((INDENT_LEVEL+1))
+			Fname=${FILE/*\//}
+			test -n "${FILE/$Fname/}" && mkdir -p $1/${confiserie}/${FILE/$Fname/}
+			cp $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/${FILE}
+			echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts
+			install_new_script $DIR $DIR/${confiserie}/$FILE
+			INDENT_LEVEL=$((INDENT_LEVEL-1))
+
+		fi
+	done
+	IFS=$OLDIFS
+}
+
+install_all_scripts() {
+	cp -Rp $CONFISERIE_SCRIPTS_DIR/tests/ $1/confiserie.ref
+}
+
+
+install_make_template() {	
+	cp -Rp $CONFISERIE_SCRIPTS_DIR/make_templates/ $1
+}
+
+
+parse_sources() {
+  local OPTIONAL_HEADER_PAT
+  OPTIONAL_HEADER_PAT=$(find $1 -exec grep 'HAVE_[^ ]*_H' {} \; |
+                        awk '{gsub("^.*HAVE_",""); 
+                              gsub("_","."); 
+                              gsub(" .*$","");
+                              gsub(" ","",g);
+                              printf("%s\n",$0);
+                            }' |sort |uniq )
+  INCLUDES=$(find $1 -regex '.*\.c\|.*\.CC\|.*\.h\|.*\.hpp' \
+                     -exec grep -q '^[:space:]*#include.*<' {} \; | 
+             awk '{gsub("#include.*<","");
+                   gsub(">.*$","");
+                   printf("%s\n",$0);
+                 }' |sort |uniq)
+
+  OPTIONAL_INCLUDES=$(echo $INCLUDES | grep -i "$OPTIONAL_HEADER_PAT")
+  REQUIRED_INCLUDES=$(echo $INCLUDES | grep -vi "$OPTIONAL_HEADER_PAT")
+}
+
+
+
+display_help() {
+	cat <<-EOF
+	$0 [-V|--version][-c|--copy-all][-t|--make-templates] /path/to/sources
+	[-V|--version]   : display version and exit
+	[-c|--copy-all]  : copy all scripts even uneeded one, don't check ./configure
+	[-t|--make-templates] : copy some make template that can be used to begin
+	    a project like single_app.Makefile single_lib.Makefile....
+	EOF
+}
+
+install_requirement() {
+	check_confiser_path
+	check_update $1 
+	if [ -n "$ALL" ]; then 
+		install_all_scripts $1
+	else
+		install_new_script $1 $1/configure
+	fi
+	if [ -n "$MAKE_TEMPLATE" ]; then
+		install_make_template $1
+	fi
+	cp -R $CONFISERIE_SCRIPTS_DIR/doc $1/${confiserie}
+}
+
+process_args() {
+	while [ "$#" -gt 0 ]; do
+		case $1 in
+			"--help"|"-h")
+				display_help
+				exit 0;;
+			"-V"|"--version" )
+				echo "$0 0.0.1"
+				exit 0;;
+			"-c"|"--copy-all" )
+				ALL="yes"
+				shift;;
+			"-t"|"--make-templates")
+				MAKE_TEMPLATE="yes"
+				shift;;
+			"--confiserie" )
+				confiserie=$2
+				shift
+				shift;;
+			-* )
+				echo "$1 unknown option"
+				exit 1;;
+			*)		
+				install_requirement $1
+				shift
+				;;
+		esac
+	done
+}
+
+#~ DIR_TO_CONFIGURE=$(echo $1 | sed "s:/$::")
+#~ DIR_TO_CONFIGURE=${DIR_TO_CONFIGURE:="."}
+confiserie=${confiserie:=confiserie}
+if [ "$#" -eq 0 ]; then
+	display_help
+	exit 1
+fi
+if [ -a /etc/confiserie.conf ]; then
+	. /etc/confiserie.conf
+fi
+
+INDENT_LEVEL=0
+
+process_args "$@"
+
+exit 0
+

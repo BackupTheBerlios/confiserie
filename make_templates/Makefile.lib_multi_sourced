@@ -1,0 +1,75 @@
+# (C) 2005-2005 MALET Jean-Luc aka cityhunter
+#this file is provided under the thermes of the BSD licence, you can use it, modify it
+#include it into your commercial software as you want
+
+# as a general rule to avoid issues
+#    make variables first
+#    make rules following (first appearing rule is the default when issuing 'make')
+#    others includes last
+
+
+export TOPSRC_DIR?=${PWD}
+export VPATH=${TOPSRC_DIR}/${MSGSUBDIR}
+include ${TOPSRC_DIR}/Makefile.confiserie
+
+#general variables
+.PHONY : all lib clean debug 
+#default  target:
+all :
+
+#addition to environnement variable, be carefull when nesting subdirs in this makefile
+LDFLAGS+= -lpthread -ldl -lrt
+CFLAGS+= -Wall -fPIC -Werror-implicit-function-declaration
+CPPFLAGS+= -I../include 
+
+#here goes your sources
+lib_sources = mlBeginTransfer.c mlGetCapabilities.c mlGetSystemUST.c mlModules.c
+lib_sources += mlPvValueToString.c mlSendMessage.c mlClose.c mlGetControls.c 
+lib_sources += mlGetVersion.c mlOpen.c mlSelectPipe.c mlSetControls.c
+lib_sources += mlEndTransfer.c mlGetMessageCount.c mlMessageName.c mlPvToString.c
+lib_sources += mlPvParamToString.c mlReceiveMessage.c mlXcodeWork.c register.c
+lib_sources += mlFreeMessage.c mlGetReceiveWaitHandle.c mlMessageQueue.c
+#lib_sources +=  mlPvXXXXFromString.c
+
+
+#version of the lib, use a libtool like scheme :
+# libtool : versionning mechanism isn't logical, a logical one should be :
+#    * CURRENT:AGE:REVISION
+#    * source code improvement : REVISION++
+#    * on interface addition : AGE++, REVISION=0
+#    * interface removal/change : CURRENT++, AGE=0, REVISION=0
+#          o doing so garanties that a program can safely link with libraries with same CURRENT, Greater AGE, greater REVISION
+#    * and more : this keep the package version scheme usually used ....  
+VERSION=0.0.0
+#now the targets
+all : libOpenML.${VERSION}.so
+
+libOpenML.${VERSION}.so : ${lib_sources:%.c=%.o}
+	rm -f libOpenML*
+	${LDMESG} $@
+	${LD} ${LDFLAGS} -shared -Bdynamic -soname $@ -o $@ $^
+	ln -s $@ libOpenML.so
+	${SUCCESSMSG} $@
+
+
+#a special target : it only modify CFLAGS variables before making it the standard way
+debug : CFLAGS+= -g3 -gdwarf-2 -O0
+debug : all
+
+clean : 
+	${CLEANINGMSG} ${MSGSUBDIR}
+	rm -Rf *.o *.so .DEP
+
+install :
+	${INSTALLMSG} ${lib_sources:%.c=%.so} in ${INSTALL_PREFIX}/lib/mlplugins
+	mkdir -p  ${INSTALL_PREFIX}/lib/mlplugins
+	${INSTALL} -C ${lib_sources:%.c=%.so} ${INSTALL_PREFIX}/lib/mlplugins
+
+#includes
+include ${confiserie}/C/Makefile.beautifull_rules
+include ${confiserie}/C/Makefile.auto_headers_deps
+
+#create the dependencies (the - is for avoiding it to be too verbose)
+-include ${lib_sources:%.c=.DEP/%.d}
+
+

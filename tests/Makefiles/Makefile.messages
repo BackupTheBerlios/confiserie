@@ -1,0 +1,15 @@
+ifndef COLOR
+	export CCMESG?=echo -e [ CC  ]\\t
+	export LDMESG?=echo -e [ LD  ]\\t
+	export SUCCESSMSG?=echo -e  [ BUILD SUCCESS ]\\t
+	export CLEANINGMSG?=echo -e [ cleaning ]\\t
+	export GENMSG?=echo -e [ GEN ]\\t
+	export INSTALLMSG?=echo -e [ installing ]\\t
+else
+	export CCMESG?=echo -e [ \\e[33m CC \\e[0m ]\\t
+	export LDMESG?=echo -e [ \\e[33m LD \\e[0m ]\\t
+	export SUCCESSMSG?=echo -e [ \\e[32m BUILD SUCCESS\\e[0m ]\\t
+	export CLEANINGMSG?=echo -e [ \\e[32mcleaning \\e[0m ]\\t
+	export GENMSG?=echo -e [ \\e[33m GEN\\e[0m ]\\t
+	export INSTALLMSG?=echo -e [ \\e[32minstalling\\e[0m ]\\t
+endif

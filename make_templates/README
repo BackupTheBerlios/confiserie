@@ -1,0 +1,48 @@
+what's this?
+------------------
+this is a set of makefiles that I created during my own projects
+I feel that those could be used to help user beggining a project
+
+why?
+------------------
+usually a user starting a project often don't know about makefile
+often they are told that Makefile are hard to create/maintain
+so they try first tools like automake (which imply the use of autoconf)
+without even regarding "info make". if they have done it they will see
+that automake don't really is simplier.... and often when the project
+grows the developper want to do something fancy, and have to learn about
+Makefiles.....
+
+how is it simplier?
+-------------------
+it's not ^_^ but consider this 2 cases :
+1) learn automake, then later learn make
+2) learn make
+I propose the 2)
+
+so it's more complex?
+--------------------
+it's not ^_^
+I created "themed Makefiles" each containing a set of rules to perform
+some usual tasks
+the Makefiles have been designed to be compatible each other and will try
+to only use CFLAGS, LDFLAGS like variables
+you can merge the themes to create a bigger project or use include command of
+make to include defaults rules
+
+how are they compatible?
+-------------------
+some environnement variables are used and should be set in topsource makefile
+(see the template included)
+TOPSRC_DIR will contain a absolute path of the top source directory, this allow
+you to create abitrarly nested sources
+confiserie will create a Makefile that will define the needed variables (such
+as CCMSG....)
+
+note that thoses makefiles depends on the $confiserie/beautifull_make_rules.sh
+into ./configure
+
+
+REFERENCES
+--------------------
+info make : an amazing info pages with almost all you'll ever need to know

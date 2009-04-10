@@ -1,0 +1,60 @@
+#/***********************************************************************
+#* copyright (c) 2004-2006 MALET Jean-luc aka cityhunter
+#* This library is free software; you can redistribute it and/or modify
+#* it under the terms of the LGPL v2.1 or latter at your option
+#* http://www.gnu.org/copyleft/lesser.html
+#************************************************************************/
+include ${confiserie}/Makefiles/Makefile.messages
+
+distclean : clean 
+clean : clean_c_rule
+clean_c_rule:
+	rm -f GENERATED
+	rm -f *.o
+
+#automatic compilation : single source programms
+#this is a "beautifull" rules : it display strings like [ CC ] lib/toto.c
+#this rule is used to automatic compile and link one program that rely on one single source
+#this rule is really usefull for creating tests
+%: %.c
+	${CCMESG} ${MSGSUBDIR}$<
+	-rm -f $@
+	${CC} ${CC_LDFLAGS} ${CFLAGS} ${CPPFLAGS} -o $@ $<
+	
+	
+#automatic compilation : generate .o from .c
+#this is a 'beautifull' rules : it display strings like [ CC ] lib/toto.c
+%.o: %.c
+	${CCMESG} ${MSGSUBDIR}$<
+	-rm -f $@
+	${CC} -c ${CFLAGS} ${CPPFLAGS} -o $@ $<
+	
+#automatic compilation : make a shared library from a single .c
+%.so: %.c
+	${CCMESG}  ${MSGSUBDIR}$<
+	-rm -f $@
+	${CC} -shared ${CFLAGS} ${CPPFLAGS} -o $@ $<
+
+#automatic compilation : single source programms
+#this is a "beautifull" rules : it display strings like [ CC ] lib/toto.c
+#this rule is used to automatic compile and link one program that rely on one single source
+#this rule is really usefull for creating tests
+GENERATED/%: %.c
+	${CCMESG} ${MSGSUBDIR}$<
+	-rm -f $@
+	${CC} ${LDFLAGS} ${CFLAGS} ${CPPFLAGS} -o $@ $<
+	
+	
+#automatic compilation : generate .o from .c
+#this is a 'beautifull' rules : it display strings like [ CC ] lib/toto.c
+GENERATED/%.o: %.c
+	${CCMESG} ${MSGSUBDIR}$<
+	-rm -f $@
+	${CC} -c ${CFLAGS} ${CPPFLAGS} -o $@ $<
+	
+#automatic compilation : make a shared library from a single .c
+GENERATED/%.so: %.c
+	${CCMESG}  ${MSGSUBDIR}$<
+	-rm -f $@
+	${CC} -shared ${CFLAGS} ${CPPFLAGS} -o $@ $<
+
