@@ -204,10 +204,20 @@ finish_confiserie() {
 	make distclean to clean everything
 	EOF
     echo "saving the configure result"
+    rm .config.cache
     for Environ in ${MODIFIED_ENV}; do
-        eval echo "export $1=\\\"\$$1\\\"" >> .config.cache
+        eval echo "export ${Environ}=\\\"\$${Environ}\\\"" >> .config.cache
     done
     echo "configure success"
+}
+
+create_file() {
+        File=${1};
+        shift;
+        while [ "$#" -gt 0 ]; do
+                eval echo "export ${1}=\\\"\$${1}\\\"" >> ${File};
+                shift;
+        done
 }
 
 clean_on_sig() {
@@ -225,7 +235,9 @@ declare -F custom_clean_on_sig > /dev/null &&
 typeset -x custom_clean_on_sig
 
 trap clean_on_sig 2 15                   &&
-unalias -a
+unalias -a                               &&
+custom_clean_on_sig
+
 alias runtest=source
 
 . ${confiserie}/clear_nls.sh || exit 1            
