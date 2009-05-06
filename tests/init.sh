@@ -12,6 +12,8 @@
 confiserie=${confiserie:=.}
 . ${confiserie}/confiserie.cache.functions.sh
 
+unset MODIFIED_ENV
+
 PACKAGE_OPTS_COUNT=${#CONFIGURE_OPTS[@]}
 CONFIGURE_OPTS[$((PACKAGE_OPTS_COUNT+1))]="--prefix=,PREFIX,configure package to be located in prefix [path],/usr/local"
 CONFIGURE_OPTS[$((PACKAGE_OPTS_COUNT+2))]="--crosscompiling=,CROSSCOMPILING,the package is crosscompiled [YES|NO],NO"
@@ -183,18 +185,17 @@ find_topsrc_objdir() {
 }
 
 run_init() {
-	echo "welcome to confiserie configure system" 1>&2
-	echo "package configured with : " 1>&2
-	parse_opts "$@"                         
-	echo "loading cached values located in .config.cache" 1>&2
-	if [ -f .config.cache ]; then
-		. .config.cache
-	fi
-	echo "confiserie init success" 1>&2
+    echo "welcome to confiserie configure system" 1>&2
+    echo "package configured with : " 1>&2
+    parse_opts "$@"                         
+    echo "loading cached values located in .config.cache" 1>&2
+    if [ -f .config.cache ]; then
+        . .config.cache
+    fi
+    echo "confiserie init success" 1>&2
 }
 
 finish_confiserie() {
-	mv .config.cache.new .config.cache &&
 	cat <<-EOF
 	configured type 
 	make to build
@@ -202,14 +203,17 @@ finish_confiserie() {
 	make clean to clean (leave configuration information)
 	make distclean to clean everything
 	EOF
-  echo "configure success"
+    echo "saving the configure result"
+    for Environ in ${MODIFIED_ENV}; do
+        eval echo "export $1=\\\"\$$1\\\"" >> .config.cache
+    done
+    echo "configure success"
 }
 
 clean_on_sig() {
-   rm -f .config.cache.new .config.cache
-	 declare -F custom_clean_on_sig > /dev/null && 
-	 clean_on_sig;
-	 exit 1
+    declare -F custom_clean_on_sig > /dev/null && 
+    custom_clean_on_sig;
+    exit 1
 }
 
 
@@ -222,7 +226,7 @@ typeset -x custom_clean_on_sig
 
 trap clean_on_sig 2 15                   &&
 unalias -a
-rm -f .config.cache.new
+alias runtest=source
 
 . ${confiserie}/clear_nls.sh || exit 1            
 

@@ -15,7 +15,7 @@ CONFIGURE_OPTS[4]="--test=,TEST,test option [string],/usr/local"
 
 #this funtion should clean the file you create with this script
 custom_clean_on_sig() {
-	rm -f $MAKEFILE
+    rm -f $MAKEFILE
 }
 
 #clean everything before beginning
@@ -25,52 +25,63 @@ custom_clean_on_sig
 #of used tool
 source ${confiserie}/init.sh "$@"  &&
 
+#the additional included Makefiles
+{
+    #helper makefiles that we may use
+    #include ${confiserie}/C/Makefile.beautifull_rules  &&
+    #include ${confiserie}/Makefiles/Makefile.autolib   &&
+    #include ${confiserie}/C/Makefile.autoapp           &&
+    #include ${confiserie}/C/autopcflags                &&
+    #include ${confiserie}/C/Makefile.auto_headers_deps &&
+    #include ${confiserie}/Makefiles/Makefile.tags
+} 1>>Makefiles.confiserie ||clean_on_sig
+
 
 #the utilities required for compile test script, outputed to a Makefile
 {
-  ${confiserie}/test1.sh &&
-  ${confiserie}/test2.sh &&
-  ....
-  ${confiserie}/testn.sh
+    ${confiserie}/test1.sh &&
+    ${confiserie}/test2.sh &&
+    ....
+    ${confiserie}/testn.sh
 } 1>>Makefile.confiserie ||clean_on_sig 
 
 
 
 #the required features test, outputed to a config header
 {
-  ${confiserie}/test_c_1.sh &&
-  ${confiserie}/test_c_2.sh &&
-  ${confiserie}/test_c_3.sh &&
-  ....                    &&
-  ${confiserie}/test_c_n.sh 
+    ${confiserie}/test_c_1.sh &&
+    ${confiserie}/test_c_2.sh &&
+    ${confiserie}/test_c_3.sh &&
+    ....                    &&
+    ${confiserie}/test_c_n.sh 
 } 1>>config.h ||clean_on_sig  
 
 
 
 #the utilies required for running the programm, outputed to a Makefile
 {
-  ${confiserie}/test1.sh &&
-  ${confiserie}/test2.sh &&
-  ....                 &&
-  ${confiserie}/testn.sh
+    ${confiserie}/test1.sh &&
+    ${confiserie}/test2.sh &&
+    ....                 &&
+    ${confiserie}/testn.sh
 } 1>>Makefile.run ||clean_on_sig
 
 # the utilies optional for running the programm, outputed to  a Makefile, 
 # note the absence of && at end of each lines and the absence of clean_on_sig
 {
-  test "true" = "TEST_FEATUREZ" && ${confiserie}/test1.sh 
-  ${confiserie}/test2.sh 
-  ....
-  ${confiserie}/testn.sh
+    test "true" = "TEST_FEATUREZ" && ${confiserie}/test1.sh 
+    ${confiserie}/test2.sh 
+    ....
+    ${confiserie}/testn.sh
 } 1>>Makefile.run 
 
 
 #the features optionally required, same remarks as above
 {
-  test "true" = "TEST_FEATUREX" && ${confiserie}/test1.sh 
-  ${confiserie}/test2.sh 
-  ....
-  ${confiserie}/testn.sh
+    test "true" = "TEST_FEATUREX" && ${confiserie}/test1.sh 
+    ${confiserie}/test2.sh 
+    ....
+    ${confiserie}/testn.sh
 } 1>>optional.h 
 
 
