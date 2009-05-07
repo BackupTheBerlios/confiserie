@@ -72,5 +72,6 @@ clean : autoappCXX_dep_clean
 autoappCXX_dep_clean : 
 	rm -rf GENERATED
 
+include ${confiserie}/CXX/Makefile.beautifull_rules
 #endif autolibapp
 endif 

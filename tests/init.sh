@@ -188,10 +188,6 @@ run_init() {
     echo "welcome to confiserie configure system" 1>&2
     echo "package configured with : " 1>&2
     parse_opts "$@"                         
-    echo "loading cached values located in .config.cache" 1>&2
-    if [ -f .config.cache ]; then
-        . .config.cache
-    fi
     echo "confiserie init success" 1>&2
 }
 
@@ -204,14 +200,11 @@ finish_confiserie() {
 	make distclean to clean everything
 	EOF
     echo "saving the configure result"
-    rm .config.cache
-    for Environ in ${MODIFIED_ENV}; do
-        eval echo "export ${Environ}=\\\"\$${Environ}\\\"" >> .config.cache
-    done
     echo "configure success"
+    exit 0
 }
 
-create_file() {
+create_include() {
         File=${1};
         shift;
         while [ "$#" -gt 0 ]; do
@@ -219,6 +212,16 @@ create_file() {
                 shift;
         done
 }
+
+create_makefile() {
+        File=${1};
+        shift;
+        while [ "$#" -gt 0 ]; do
+                eval echo "export ${1}=\$${1}" >> ${File};
+                shift;
+        done
+}
+
 
 clean_on_sig() {
     declare -F custom_clean_on_sig > /dev/null && 
