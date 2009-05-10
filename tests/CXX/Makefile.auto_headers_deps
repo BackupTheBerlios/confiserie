@@ -8,6 +8,9 @@
 #require awk and sed tests
 ifdef AWK
 
+#this test only run if the variable ENABLE_AUTODEPS is set to yes
+ifeq (${ENABLE_AUTODEPS}, yes)
+
 ifndef COLOR
 	export GENMSG?=echo -e [ GEN ]\\t
 else
@@ -26,7 +29,7 @@ clean_auto_cxx_dep :
 #the dependency : this rules will create automatically the dependencies in a Makefile
 #format in GENERATED/%.d file where % is the name of the .c (ie toto.c %=toto}
 # to use this add a 
-#-include ${sources:%.c=GENERATED/%.d}
+#-include ${sources:%.cxx=GENERATED/%.d}
 #in your Makefile, where sources is the variable listing your .c
 define cc_dep_macro
 	${GENMSG} ${MSGSUBDIR}$<
@@ -44,4 +47,5 @@ GENERATED/%.C.d: %.C
 GENERATED/%.cxx.d: %.cxx
 	$(call cc_dep_macro)
 
+endif #ENABLE_AUTODEPS
 endif #AWK

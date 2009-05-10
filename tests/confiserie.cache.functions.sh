@@ -6,10 +6,18 @@
 #* http://www.gnu.org/copyleft/lesser.html
 #************************************************************************/
 
+if test -z "${__CACHE_FUNC}"; then
+    __CACHE_FUNC=sourced
+    conf_cache() {
+        eval export $1=\$$1
+        export MODIFIED_ENV="$(echo ${MODIFIED_ENV} $1 |sort |uniq)"
+        eval echo "$1=\$$1" >&2
+    }
 
-conf_cache() {
-	eval export $1=\$$1
-    export MODIFIED_ENV="${MODIFIED_ENV} $1"
-	eval echo "$1=\$$1" >&2
-}
+    mytest() {
+        . ${confiserie}/tools/sort.sh &&
+        . ${confiserie}/tools/uniq.sh
+    }
 
+    mytest
+fi

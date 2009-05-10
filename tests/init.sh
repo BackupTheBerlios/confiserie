@@ -10,7 +10,6 @@
 #you should put here only what is needed to make the scripts run
 #others test must go elsewhere
 confiserie=${confiserie:=.}
-. ${confiserie}/confiserie.cache.functions.sh
 
 unset MODIFIED_ENV
 
@@ -96,7 +95,7 @@ display_help() {
 		--interactive           do interactive configuration, all options
 		                        are prompted for answer
 	
-                         
+
 	Some influential environment variables:
 	  //see man gcc or whatever compiler you're using
 	  CC          C compiler command, if possible, set an absolute path
@@ -147,6 +146,7 @@ display_help() {
 
 find_topsrc_objdir() {
 
+    echo "${TEST_SEPARATOR}"
 	reduce_name() {
 		while [ "$#" -gt 0 ]; do
 			if [ "$2" == ".." ]; then
@@ -166,7 +166,7 @@ find_topsrc_objdir() {
 	if echo $0 | grep -q "^/"; then
 		TOPSRC_DIR=${0/$name/} 
 	else
-		TOPSRC_DIR=$PWD/${0/$name/} 
+		TOPSRC_DIR=$PWD/${0/$name/}
 	fi
 	OLDIFS=$IFS
 	IFS=$'/'
@@ -181,17 +181,19 @@ find_topsrc_objdir() {
 	confiserie=$TOPSRC_DIR/$confpath
 	conf_cache confiserie
 
-	. ${confiserie}/create_link_farm.sh       
+	. ${confiserie}/create_link_farm.sh
 }
 
 run_init() {
+    echo "${TEST_SEPARATOR}"
     echo "welcome to confiserie configure system" 1>&2
     echo "package configured with : " 1>&2
-    parse_opts "$@"                         
+    parse_opts "$@"
     echo "confiserie init success" 1>&2
 }
 
 finish_confiserie() {
+    echo "${TEST_SEPARATOR}"
 	cat <<-EOF
 	configured type 
 	make to build
@@ -199,7 +201,10 @@ finish_confiserie() {
 	make clean to clean (leave configuration information)
 	make distclean to clean everything
 	EOF
-    echo "saving the configure result"
+    echo "===========SUMMARY=============="
+    for variable in ${MODIFIED_ENV}; do
+        eval echo "export ${variable}=\\\"\$${variable}\\\"" 1>&2;
+    done
     echo "configure success"
     exit 0
 }
@@ -231,9 +236,9 @@ clean_on_sig() {
 
 
 include() {
-	return 0
+    return 0
 }
-	
+
 declare -F custom_clean_on_sig > /dev/null && 
 typeset -x custom_clean_on_sig
 
@@ -241,22 +246,23 @@ trap clean_on_sig 2 15                   &&
 unalias -a                               &&
 custom_clean_on_sig
 
+export TEST_SEPARATOR="_______________________________________________________________________________"
 alias runtest=source
 
-. ${confiserie}/clear_nls.sh || exit 1            
+. ${confiserie}/clear_nls.sh || exit 1
 
 if which_result=$(${confiserie}/which.sh which); then
-	export WHICH=${which_result}
+    export WHICH=${which_result}
 else
-	export WHICH="${confiserie}/which.sh"
+    export WHICH="${confiserie}/which.sh"
 fi   &&
-run_init "$@"                            &&
-find_topsrc_objdir                       &&
-. ${confiserie}/plateform_information.sh   &&
-. ${confiserie}/tools/test_echo.sh         &&
-. ${confiserie}/setup_dirs.sh              &&
-. ${confiserie}/tools/test_awk.sh                
+run_init "$@"                                 &&
+runtest ${confiserie}/confiserie.cache.functions.sh &&
+find_topsrc_objdir                            &&
+runtest ${confiserie}/plateform_information.sh      &&
+runtest ${confiserie}/tools/test_echo.sh            &&
+runtest ${confiserie}/setup_dirs.sh                 &&
+runtest ${confiserie}/tools/test_awk.sh
 conf_cache WHICH
 conf_cache confiserie
 
-export TEST_SEPARATOR="_______________________________________________________________________________"

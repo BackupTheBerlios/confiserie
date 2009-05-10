@@ -5,6 +5,7 @@
 #* http://www.gnu.org/copyleft/lesser.html
 #************************************************************************/
 
+echo "${TEST_SEPARATOR}"
 
 cat >&2 <<EOF
 ## --------- ##

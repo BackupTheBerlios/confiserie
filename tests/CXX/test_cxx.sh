@@ -18,6 +18,17 @@ mytest() {
 		done
 	}
 
+	clean_LDFLAGS() {
+		while [ $# -gt 0 ]; do
+            if test "${1:0:4}" = "-Wl,"; then
+                echo -n "${1:4} "
+            else
+                echo -n "$1 "
+            fi
+			shift
+		done
+	}
+
   echo ${TEST_SEPARATOR} >&2
   if [ -z "${CXX}" ]; then
     {
@@ -41,9 +52,9 @@ mytest() {
     } >&2
   fi
 	conf_cache CXXFLAGS
-
-	echo #saving C env
 	conf_cache CPPFLAGS
+    LDFLAGS=$(clean_LDFLAGS $LDFLAGS)
+    conf_cache LDFLAGS
 	CXX_LDFLAGS="${CXX_LDFLAGS} $(create_CXX_LDFLAGS $LDFLAGS)";
 	conf_cache CXX_LDFLAGS
 
