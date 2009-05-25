@@ -40,6 +40,11 @@ without_version_name="${2}${3}"
 
 if [ "${3}" == ".so" ]; then
 	cmd="\${LD} \${LDFLAGS} \${${name}_LDADD} -shared -Bdynamic -soname \$@ -o \$@ \$^ "
+elif [ "${3}" == ".dll" ]; then
+        cmd="${CC} ${CC_LDFLAGS} -shared \
+                -o \$@ -Wl,--out-implib=\$@.a\
+                -Wl,--export-all-symbols -Wl,--enable-auto-import \
+                -Wl,--no-whole-archive  \${${name}_LDADD} \$^"
 elif [ "${3}" == ".a" ]; then
 	cmd="\${AR} r \${ARFLAGS} \$@ \$^ && \${RANLIB} \$@"
 fi
