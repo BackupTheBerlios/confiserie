@@ -27,9 +27,7 @@ mytest() {
                 -Wl,--no-whole-archive  libconfiserie.o libconfiserie2.o&&
                 ${CC} ${CC_LDFLAGS} -L. -lconfiserie -o testlibconfiserie \
                 ${confiserie}/C/testlibconfiserie.c libconfiserie.dll.a&&
-                SHAREDLIBEXT=".dll" &&
-                conf_cache SHAREDLIBEXT
-                echo
+                SHAREDLIBEXT=".dll"
         }
 
         test_shared() {
@@ -39,8 +37,7 @@ mytest() {
                 -o libconfiserie.so  libconfiserie.o libconfiserie2.o &&
                 ${CC} ${CC_LDFLAGS} -L ./ -lconfiserie -o testlibconfiserie  \
                 ${confiserie}/C/testlibconfiserie.c &&
-                SHAREDLIBEXT=".so" &&
-                conf_cache SHAREDLIBEXT
+                SHAREDLIBEXT=".so"
         }
 
         test_static() {
@@ -50,8 +47,7 @@ mytest() {
                 ${RANLIB} libconfiserie.a &&
                 ${CC} ${CC_LDFLAGS} -o testlibconfiserie ${confiserie}/C/testlibconfiserie.c \
                 ./libconfiserie.a &&
-                STATICLIBEXT=".a"  &&
-                conf_cache STATICLIBEXT
+                STATICLIBEXT=".a"
         }
 
 
@@ -67,15 +63,23 @@ mytest() {
 
         create_objects 1>/dev/null &&
         if [ -z "$ENABLE_STATIC" ]; then
-                echo "WARNING : ENABLE_STATIC env not set, static libs will not be build" >&2
-                echo "          unless shared libs aren't available" >&2
+                echo "WARNING : ENABLE_STATIC env not set, static libs will not be build"
+                echo "          unless shared libs aren't available"
         else
                 test_static 
         fi &&
-
-        test_shared || test_dll || test_static
+        if [ -z "$DISABLE_DYNAMIC" ]; then
+                echo "DISABLE_DYNAMIC env not set => testing for shared lib format"
+                test_shared || test_dll || test_static
+        fi &&
 
         clean
+
+        conf_cache STATICLIBEXT
+        conf_cache SHAREDLIBEXT
+        conf_cache AR
+        conf_cache RANLIB
+        conf_cache ARFLAGS
 
         if [ -z "$STATICLIBEXT" ] && [ -z "$SHAREDLIBEXT" ]; then
                 echo "can't determine extension.... " >&2
