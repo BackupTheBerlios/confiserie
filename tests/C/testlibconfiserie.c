@@ -7,8 +7,12 @@
 
 
 int do_nothing(void);
+int do_nothing2(void);
 
 int main(int argc, char** argv)
 {
-  return do_nothing();
+        int err;
+        err = do_nothing2();
+        if (err) return err;
+        return do_nothing();
 }
