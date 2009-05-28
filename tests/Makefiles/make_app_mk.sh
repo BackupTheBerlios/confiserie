@@ -14,7 +14,7 @@
 name=$( format_name "$2")
 name="${name}${EXE}"
 
-cmd="\${${3}} \${${3}_LDFLAGS} \${${name}_LDADD} -o \$@ \$^ "
+cmd="\${${3}}  -o \$@ \$^ \${${3}_LDFLAGS} \${${name}_LDADD} "
 
 case $1 in
 	BIN_DIR)
