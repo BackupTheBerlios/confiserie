@@ -10,9 +10,17 @@
 #* http://www.gnu.org/copyleft/lesser.html
 #************************************************************************/
 
+
 . ${confiserie}/format_name.sh
 name=$( format_name "$2")
 name="${name}${EXE}"
+
+if test -n "${CONFISERIE_DEBUG}"; then
+        echo generating GENERATED/${name}.${3}.d >&2
+        echo \${1} : ${1} >&2
+        echo \${2} : ${2} >&2
+        echo \${3} : ${3} >&2
+fi
 
 cmd="\${${3}}  -o \$@ \$^ \${${3}_LDFLAGS} \${${name}_LDADD} "
 
