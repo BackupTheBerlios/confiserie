@@ -7,46 +7,35 @@
 
 ifdef CONFISERIE_DEBUG
 $(warning "availble targets : noinst_PROGRAMS bin_PROGRAMS sbin_PROGRAMS custom_PROGRAMS")
+$(warning "noinst_PROGRAMS = ${noinst_PROGRAMS} ")
+$(warning "bin_PROGRAMS = ${bin_PROGRAMS} ")
+$(warning "sbin_PROGRAMS = ${sbin_PROGRAMS} ")
+$(warning "custom_PROGRAMS = ${custom_PROGRAMS} ")
+$(warning "if the variable isn't defined makefile won't be built")
 endif
 
 #programms created for compilation purpose but not installed
 ifdef noinst_PROGRAMS
 autolibapp=yes
 include $(foreach app,${noinst_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh NOINST_DIR ${app} CC) )
-else
-ifdef CONFISERIE_DEBUG
-$(warning noinst_PROGRAMS not defined, disabling)
-endif
 endif
 
 #programms installed into bin dir
 ifdef bin_PROGRAMS
 autolibapp=yes
 include $(foreach app,${bin_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh BIN_DIR ${app} CC))
-else
-ifdef CONFISERIE_DEBUG
-$(warning bin_PROGRAMS not defined, disabling)
-endif
 endif
 
 #programms installed into sbin dir
 ifdef sbin_PROGRAMS
 autolibapp=yes
 include $(foreach app,${sbin_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh SBIN_DIR ${app} CC) )
-else
-ifdef CONFISERIE_DEBUG
-$(warning sbin_PROGRAMS not defined, disabling)
-endif
 endif
 
 #programms installed into bin dir
 ifdef custom_PROGRAMS
 autolibapp=yes
 include $(foreach app,${custom_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh CUSTOM_BIN_DIR ${app} CC) )
-else
-ifdef CONFISERIE_DEBUG
-$(warning custom_PROGRAMS not defined, disabling)
-endif
 endif
 
 
