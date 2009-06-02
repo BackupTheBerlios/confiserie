@@ -11,14 +11,13 @@ indenter() {
 
 check_update() {
 	if [ -d $1/${confiserie} ]; then
-		echo "$1/${confiserie} already exist, update?"
-		read
-		if [ "$REPLY" == "y" ]; then
+		if [ "${UPDATE}" == "yes" ]; then
 			if [ -f $1/${confiserie}/autoinstalledscripts ]; then 
 				cat $1/${confiserie}/autoinstalledscripts |xargs -i rm -rf $1/{}
 				rm $1/${confiserie}/autoinstalledscripts
 			fi
 		else 
+                        echo "cowardly refusing to update an existing confiserie without -u option"
 			exit 1;
 		fi
 	fi	
@@ -43,27 +42,38 @@ fi
 
 install_new_script() {
 
-	local SCRIPT=$2
-	local DIR=$1
-	OLDIFS=$IFS
-	IFS=$'\n'
-	
-	indenter $SCRIPT
-	for FILE in $(find $CONFISERIE_SCRIPTS_DIR/tests -type f -printf "%P\n" ); do
-		if grep -q \$\{confiserie\}/$FILE $SCRIPT && 
-				! [ -x $DIR/${confiserie}/$FILE ]
-		then
-			INDENT_LEVEL=$((INDENT_LEVEL+1))
-			Fname=${FILE/*\//}
-			test -n "${FILE/$Fname/}" && mkdir -p $1/${confiserie}/${FILE/$Fname/}
-			cp $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/${FILE}
-			echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts
-			install_new_script $DIR $DIR/${confiserie}/$FILE
-			INDENT_LEVEL=$((INDENT_LEVEL-1))
+        local SCRIPT=$2
+        local DIR=$1
+        scriptToInstall=$(grep -E ".*\\\$\{confiserie\}.*"  ${SCRIPT} |
+                          sed "s:.*\${confiserie}/::" |
+                          cut -f 1 -d ' ')
+        OLDIFS=$IFS
+        IFS=$'\n'
 
-		fi
-	done
-	IFS=$OLDIFS
+        indenter $SCRIPT
+        for FILE in ${scriptToInstall}; do
+                if echo ${ALL_CONFISERIE_SCRIPT} | grep -q "${FILE}"; then
+                        INDENT_LEVEL=$((INDENT_LEVEL+1))
+                        Fname=${FILE/*\//}
+                        ALL_CONFISERIE_SCRIPT="${ALL_CONFISERIE_SCRIPT/${FILE}/}"
+                        if [ -d $CONFISERIE_SCRIPTS_DIR/tests/$FILE ]; then
+                                cp -R $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/$FILE
+                                echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts
+                                indenter $DIR/${confiserie}/$FILE
+                                for dircontent in $(find $DIR/${confiserie}/$FILE -type f); do
+                                        install_new_script $DIR ${dircontent}
+                                done
+                        elif [ -f $CONFISERIE_SCRIPTS_DIR/tests/$FILE ]; then
+                                test -n "${FILE/$Fname/}" && mkdir -p $1/${confiserie}/${FILE/$Fname/}
+                                cp $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/${FILE}
+                                echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts
+                                install_new_script $DIR $DIR/${confiserie}/$FILE
+                        fi
+                        INDENT_LEVEL=$((INDENT_LEVEL-1))
+
+                fi
+        done
+        IFS=$OLDIFS
 }
 
 install_all_scripts() {
@@ -105,6 +115,7 @@ display_help() {
 	[-c|--copy-all]  : copy all scripts even uneeded one, don't check ./configure
 	[-t|--make-templates] : copy some make template that can be used to begin
 	    a project like single_app.Makefile single_lib.Makefile....
+        [-u|--update] : update an already installed confiserie
 	EOF
 }
 
@@ -137,12 +148,16 @@ process_args() {
 			"-t"|"--make-templates")
 				MAKE_TEMPLATE="yes"
 				shift;;
+                        "-u"|"--update")
+                                UPDATE="yes"
+                                shift;;
 			"--confiserie" )
 				confiserie=$2
 				shift
 				shift;;
 			-* )
 				echo "$1 unknown option"
+                                display_help
 				exit 1;;
 			*)		
 				install_requirement $1
@@ -164,6 +179,7 @@ if [ -a /etc/confiserie.conf ]; then
 fi
 
 INDENT_LEVEL=0
+ALL_CONFISERIE_SCRIPT=$(find $CONFISERIE_SCRIPTS_DIR/tests -printf "%P\n" )
 
 process_args "$@"
 
