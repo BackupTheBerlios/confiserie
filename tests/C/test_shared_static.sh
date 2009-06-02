@@ -8,7 +8,7 @@
 
 mytest() {
 
-
+set -x
         CC=${CC:=gcc}
         LD=${LD:=ld}
         AR=${AR:=ar}
@@ -16,10 +16,12 @@ mytest() {
         confiserie=${confiserie:=..}
         . ${confiserie}/confiserie.cache.functions.sh
 
+        test -d .confiserietmp && rm -r .confiserietmp
         echo ${TEST_SEPARATOR} >&2
         echo test_shared_static : testing library extention >&2
-        cp -R ${confiserie}/C/libconfiserie/ .tmp &&
-        cd .tmp                                   &&
+        cp -R ${confiserie}/C/libconfiserie/ .confiserietmp &&
+        OLDPWD=${PWD}                             &&
+        cd .confiserietmp                                   &&
         {
 
                 if [ -z "$ENABLE_STATIC" ]; then
@@ -37,6 +39,7 @@ mytest() {
                                 echo "----------------------------"
                                 echo "testing if elf .so are supported"
                                 export SHAREDLIBEXT=".so";
+                                ls
                                 make
                         } ||
                         {
@@ -48,8 +51,8 @@ mytest() {
                 fi
         }
 
-        cd --
-        rm -r .tmp
+        cd ${OLDPWD}
+        rm -r .confiserietmp
 
         conf_cache STATICLIBEXT
         conf_cache SHAREDLIBEXT
@@ -63,7 +66,7 @@ mytest() {
                 echo "can't determine extension.... " >&2
                 return 1
         fi
-
+set +x
 }
 
 mytest

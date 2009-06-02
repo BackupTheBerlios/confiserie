@@ -40,6 +40,18 @@ fi
 
 }
 
+copy_and_process() {
+        local DIR=$1
+        local FILE=$2
+        Fname=${FILE/*\//}
+        test -n "${FILE/$Fname/}" && mkdir -p $DIR/${confiserie}/${FILE/$Fname/}
+        cp $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/${FILE}
+        echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts
+        install_new_script $DIR $DIR/${confiserie}/$FILE
+
+}
+
+
 install_new_script() {
 
         local SCRIPT=$2
@@ -54,20 +66,13 @@ install_new_script() {
         for FILE in ${scriptToInstall}; do
                 if echo ${ALL_CONFISERIE_SCRIPT} | grep -q "${FILE}"; then
                         INDENT_LEVEL=$((INDENT_LEVEL+1))
-                        Fname=${FILE/*\//}
                         ALL_CONFISERIE_SCRIPT="${ALL_CONFISERIE_SCRIPT/${FILE}/}"
                         if [ -d $CONFISERIE_SCRIPTS_DIR/tests/$FILE ]; then
-                                cp -R $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/$FILE
-                                echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts
-                                indenter $DIR/${confiserie}/$FILE
-                                for dircontent in $(find $DIR/${confiserie}/$FILE -type f); do
-                                        install_new_script $DIR ${dircontent}
+                                for dircontent in $(find $CONFISERIE_SCRIPTS_DIR/tests/$FILE -type f -printf "%P\n"); do
+                                        copy_and_process $DIR $FILE/${dircontent}
                                 done
                         elif [ -f $CONFISERIE_SCRIPTS_DIR/tests/$FILE ]; then
-                                test -n "${FILE/$Fname/}" && mkdir -p $1/${confiserie}/${FILE/$Fname/}
-                                cp $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/${FILE}
-                                echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts
-                                install_new_script $DIR $DIR/${confiserie}/$FILE
+                                copy_and_process $DIR $FILE
                         fi
                         INDENT_LEVEL=$((INDENT_LEVEL-1))
 
