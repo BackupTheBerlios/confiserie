@@ -9,7 +9,7 @@ include ${confiserie}/Makefiles/Makefile.messages
 distclean : clean 
 clean : clean_c_rule
 clean_c_rule:
-	rm -f GENERATED
+	rm -rf GENERATED
 	rm -f *.o
 
 define cc_o_macro

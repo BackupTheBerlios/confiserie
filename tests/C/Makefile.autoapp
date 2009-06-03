@@ -5,6 +5,8 @@
 #* http://www.gnu.org/copyleft/lesser.html
 #************************************************************************/
 
+all:
+
 ifdef CONFISERIE_DEBUG
 $(warning "availble targets : noinst_PROGRAMS bin_PROGRAMS sbin_PROGRAMS custom_PROGRAMS")
 $(warning "noinst_PROGRAMS = ${noinst_PROGRAMS} ")
@@ -41,13 +43,3 @@ endif
 
 
 
-ifdef autolibapp
-
-
-clean : clean_autoapp_dep
-
-clean_autoapp_dep : 
-	rm -rf GENERATED
-
-#endif autolibapp
-endif 
