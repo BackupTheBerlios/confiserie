@@ -4,7 +4,7 @@
 #* it under the terms of the LGPL v2.1 or latter at your option
 #* http://www.gnu.org/copyleft/lesser.html
 #************************************************************************/
-
+all:
 
 ifdef CONFISERIE_DEBUG
 $(warning SHAREDLIBEXT : ${SHAREDLIBEXT})
@@ -95,11 +95,6 @@ SUCCESSMSG ?= echo "[ SUCCESS ]"
 CLEANINGMSG ?= echo "[CLEANING]"
 #don't forget to include the generated makefiles
 
-
-clean : autolib_dep_clean
-
-autolib_dep_clean : 
-	rm -rf GENERATED
 
 #endif autolibapp
 endif 

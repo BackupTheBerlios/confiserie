@@ -8,11 +8,11 @@
 
 mytest() {
 
-set -x
-        CC=${CC:=gcc}
-        LD=${LD:=ld}
-        AR=${AR:=ar}
-        RANLIB=${RANLIB:=ranlib}
+        export CC=${CC:=gcc}
+        export LD=${LD:=ld}
+        export AR=${AR:=ar}
+        export RANLIB=${RANLIB:=ranlib}
+        export ARFLAGS=${ARFLAGS:=}
         confiserie=${confiserie:=..}
         . ${confiserie}/confiserie.cache.functions.sh
 
@@ -31,28 +31,41 @@ set -x
                         echo "----------------------------"
                         echo "testing if ar archives are supported"
                         export STATICLIBEXT=".a";
+                        make clean
                         make || unset STATICLIBEXT;
+                        STATIC_RESULT=${STATICLIBEXT};
+                        unset STATICLIBEXT
                 fi &&
                 if [ -z "$DISABLE_DYNAMIC" ]; then
                         echo "DISABLE_DYNAMIC env not set => testing for shared lib format"
                         {
+                                make clean
                                 echo "----------------------------"
                                 echo "testing if elf .so are supported"
                                 export SHAREDLIBEXT=".so";
-                                ls
                                 make
                         } ||
                         {
+                                make clean
                                 echo "----------------------------"
                                 echo "testing if dll are supported"
                                 export SHAREDLIBEXT=".dll";
                                 make
-                        } || unset SHAREDLIBEXT
+                        } ||
+                        {
+                                make clean
+                                unset SHAREDLIBEXT
+                                echo "----------------------------"
+                                echo "testing if ar archives are supported"
+                                export STATICLIBEXT=".a";
+                                make || unset STATICLIBEXT;
+                        }
                 fi
         }
 
         cd ${OLDPWD}
         rm -r .confiserietmp
+        STATICLIBEXT=${STATIC_RESULT}
 
         conf_cache STATICLIBEXT
         conf_cache SHAREDLIBEXT
@@ -66,7 +79,6 @@ set -x
                 echo "can't determine extension.... " >&2
                 return 1
         fi
-set +x
 }
 
 mytest
