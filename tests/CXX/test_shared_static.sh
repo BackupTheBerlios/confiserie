@@ -9,9 +9,8 @@ confiserie=${confiserie:=..}
 [ -z "${COMMON_TEST_DEFINITION_SOURCED}" ] && source ${confiserie}/common_test_definition.sh
 
 mytest() {
-
-        [ -z "${CC}" ] && runtest ${confiserie}/C/test_cc.sh
-        export LIB_DIR=${confiserie}/C/libconfiserie/
+        [ -z "${CXX}" ] && runtest ${confiserie}/CXX/test_cxx.sh
+        export LIB_DIR=${confiserie}/CXX/libconfiserie/
         runtest ${confiserie}/script/Compiler_test_shared_static.sh
 }
 
