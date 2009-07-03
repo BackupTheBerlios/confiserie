@@ -7,6 +7,8 @@
 
 all:
 
+ifneq (${MAKECMDGOALS},clean)
+
 ifdef CONFISERIE_DEBUG
 $(warning "availble targets : noinst_PROGRAMS bin_PROGRAMS sbin_PROGRAMS custom_PROGRAMS")
 $(warning "noinst_PROGRAMS = ${noinst_PROGRAMS} ")
@@ -40,6 +42,7 @@ autolibapp=yes
 include $(foreach app,${custom_PROGRAMS},$(shell confiserie=${confiserie} ${confiserie}/Makefiles/make_app_mk.sh CUSTOM_BIN_DIR ${app} CC) )
 endif
 
+endif #MAKECMDGOALS
 
 
 
