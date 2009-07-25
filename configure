@@ -4,7 +4,8 @@ confiserie=${0/\/$progname/}/confiserie
 
 
 MAKEFILE=Makefile.confiserie
-CONFIGURE_OPTS[1]="--test=,TEST,test option [string],/usr/local"
+##CONFIGURE_OPTS flags=  variabletoset "description string" "space separated allowed values" default
+##CONFIGURE_OPTS --test= TEST "test option" "string" /usr/local
 
 clean_on_sig() {
 	rm -f $MAKEFILE

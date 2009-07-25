@@ -3,21 +3,21 @@
 indenter() {
 	local I=0
 	while [ $I -lt $INDENT_LEVEL ]; do
-		echo -n "  "
+		printf "  "
 		I=$((I+1))
 	done
-	echo $1
+	printf "$1\n"
 }
 
 check_update() {
 	if [ -d $1/${confiserie} ]; then
-		if [ "${UPDATE}" == "yes" ]; then
+		if [ "${UPDATE}" = "yes" ]; then
 			if [ -f $1/${confiserie}/autoinstalledscripts ]; then 
 				cat $1/${confiserie}/autoinstalledscripts |xargs -i rm -rf $1/{}
 				rm $1/${confiserie}/autoinstalledscripts
 			fi
 		else 
-                        echo "cowardly refusing to update an existing confiserie without -u option"
+                        printf "cowardly refusing to update an existing confiserie without -u option\n"
 			exit 1;
 		fi
 	fi	
@@ -25,35 +25,36 @@ check_update() {
 	if [ -d $1 ]; then
 		mkdir -p $1/${confiserie}
 	else
-		echo "$1 not a directory"
+		printf "$1 not a directory\n"
 		exit 1
 	fi
-        echo "auto generated file by $0" > $1/${confiserie}/options.sh
-        echo 'PACKAGE_OPTS_COUNT=${#CONFIGURE_OPTS[@]}' > $1/${confiserie}/options.sh
+        printf "#auto generated file by $0\n" > $1/${confiserie}/options
 }
 
 check_confiser_path() {
 	if [ -z "$CONFISERIE_SCRIPTS_DIR" ]; then
-	echo 'please export CONFISERIE_SCRIPTS_DIR env variable '
-	echo '(normaly /usr/share/confiserie) do a find or locate confiserie'
-	echo 'or fix the file /etc/confiser.conf'
+	printf 'please export CONFISERIE_SCRIPTS_DIR env variable \n'
+	printf '(normaly /usr/share/confiserie) do a find or locate confiserie\n'
+	printf 'or fix the file /etc/confiser.conf\n'
 	exit 1
 fi
 
 }
 
+make_opt_file() {
+        if grep -q '^[[:space:]]*##CONFIGURE_OPTS[[:space:]]*' "${1}"; then
+                grep '^[[:space:]]*##CONFIGURE_OPTS[[:space:]]*' "${1}"  |
+                        sed "s:^[[:space:]]*##CONFIGURE_OPTS[[:space:]]*::;" >> $2/options
+        fi
+}
+
 copy_and_process() {
         local DIR=$1
         local FILE=$2
-        Fname=${FILE/*\//}
-        test -n "${FILE/$Fname/}" && mkdir -p $DIR/${confiserie}/${FILE/$Fname/}
+        Fname=${FILE##*/}
+        test -n "${FILE%${Fname}}" && mkdir -p $DIR/${confiserie}/${FILE%${Fname}}
         cp $CONFISERIE_SCRIPTS_DIR/tests/$FILE $DIR/${confiserie}/${FILE}         &&
-        echo "${confiserie}/$FILE" >> $1/${confiserie}/autoinstalledscripts       &&
-        if grep -q '^[[:space:]]*CONFIGURE_OPTS' "${confiserie}/$FILE"; then
-                grep '^[[:space:]]*CONFIGURE_OPTS' "${confiserie}/$FILE"  |
-                        sed "s:__idx__:\$((PACKAGE_OPTS_COUNT+1)):g; s:$:\nPACKAGE_OPTS_COUNT=\$((PACKAGE_OPTS_COUNT+1)):;" >> $1/${confiserie}/options.sh
-        fi &&
-
+        printf "${confiserie}/$FILE\n" >> $1/${confiserie}/autoinstalledscripts       &&
         install_new_script $DIR $DIR/${confiserie}/$FILE
 
 }
@@ -67,12 +68,14 @@ install_new_script() {
                           sed "s:.*\${confiserie}/::" |
                           cut -f 1 -d ' ')
         OLDIFS=$IFS
-        IFS=$'\n'
+        IFS=$'
+'
         indenter $SCRIPT
+	make_opt_file "${SCRIPT}" "$DIR/${confiserie}"
         for FILE in ${scriptToInstall}; do
-                if echo ${ALL_CONFISERIE_SCRIPT} | grep -q "${FILE}"; then
+                if printf "${ALL_CONFISERIE_SCRIPT}\n" | grep -q "${FILE}"; then
                         INDENT_LEVEL=$((INDENT_LEVEL+1))
-                        ALL_CONFISERIE_SCRIPT="${ALL_CONFISERIE_SCRIPT/${FILE}/}"
+                        ALL_CONFISERIE_SCRIPT=$(printf "${ALL_CONFISERIE_SCRIPT}" | sed "s:${FILE}::")
                         if [ -d $CONFISERIE_SCRIPTS_DIR/tests/$FILE ]; then
                                 for dircontent in $(find $CONFISERIE_SCRIPTS_DIR/tests/$FILE -type f -printf "%P\n"); do
                                         copy_and_process $DIR $FILE/${dircontent}
@@ -113,8 +116,8 @@ parse_sources() {
                    printf("%s\n",$0);
                  }' |sort |uniq)
 
-  OPTIONAL_INCLUDES=$(echo $INCLUDES | grep -i "$OPTIONAL_HEADER_PAT")
-  REQUIRED_INCLUDES=$(echo $INCLUDES | grep -vi "$OPTIONAL_HEADER_PAT")
+  OPTIONAL_INCLUDES=$(printf "$INCLUDES\n" | grep -i "$OPTIONAL_HEADER_PAT")
+  REQUIRED_INCLUDES=$(printf "$INCLUDES\n" | grep -vi "$OPTIONAL_HEADER_PAT")
 }
 
 
@@ -151,7 +154,7 @@ process_args() {
 				display_help
 				exit 0;;
 			"-V"|"--version" )
-				echo "$0 0.0.1"
+				printf "$0 0.0.1\n"
 				exit 0;;
 			"-c"|"--copy-all" )
 				ALL="yes"
@@ -167,7 +170,7 @@ process_args() {
 				shift
 				shift;;
 			-* )
-				echo "$1 unknown option"
+				printf "$1 unknown option\n"
                                 display_help
 				exit 1;;
 			*)		
@@ -177,15 +180,15 @@ process_args() {
 		esac
 	done
 }
-
-#~ DIR_TO_CONFIGURE=$(echo $1 | sed "s:/$::")
+#set -x
+#~ DIR_TO_CONFIGURE=$(printf "$1\n" | sed "s:/$::")
 #~ DIR_TO_CONFIGURE=${DIR_TO_CONFIGURE:="."}
 confiserie=${confiserie:=confiserie}
 if [ "$#" -eq 0 ]; then
 	display_help
 	exit 1
 fi
-if [ -a /etc/confiserie.conf ]; then
+if [ -f /etc/confiserie.conf ]; then
 	. /etc/confiserie.conf
 fi
 

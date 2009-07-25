@@ -8,10 +8,10 @@
 progname=${0/*\//}
 confiserie=${0/\/$progname/}/confiserie
 
-CONFIGURE_OPTS[1]="--test=,TEST,test option [string],/usr/local"
-CONFIGURE_OPTS[2]="--test=,TEST,test option [string],/usr/local"
-CONFIGURE_OPTS[3]="--test=,TEST,test option [string],/usr/local"
-CONFIGURE_OPTS[4]="--test=,TEST,test option [string],/usr/local"
+##CONFIGURE_OPTS --test= TEST "test option" "space separated possiblities" defaultvalue
+##CONFIGURE_OPTS --test= TEST "test option" "space separated possiblities" defaultvalue
+##CONFIGURE_OPTS --test= TEST "test option" "space separated possiblities" defaultvalue
+##CONFIGURE_OPTS --test= TEST "test option" "space separated possiblities" defaultvalue
 
 #this funtion should clean the file you create with this script
 custom_clean_on_sig() {
